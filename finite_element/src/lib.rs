@@ -15,6 +15,12 @@ impl FieldElement {
         }
         Ok(Self { num, prime })
     }
+
+    pub fn pow(&self, power: u32) -> Result<Self, String> {
+
+        Self::new(self.num.pow(power as u32) % self.prime , self.prime)
+        
+    }
 }
 
 impl Add for FieldElement {
@@ -101,4 +107,14 @@ mod tests {
         let c = FieldElement::new(10, 13).unwrap();
         assert_eq!((a * b).unwrap(), c);
     }
+
+    #[test]
+    fn test_pow() {
+        let a = FieldElement::new(3, 13).unwrap();
+        // let b = FieldElement::new(12, 13).unwrap();
+        let c = FieldElement::new(1, 13).unwrap();
+        assert_eq!(a.pow(3).unwrap(), c);
+    }
+    
+
 }
