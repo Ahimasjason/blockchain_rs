@@ -1,5 +1,5 @@
 use std::cmp::PartialEq;
-use std::ops::{Add, Sub};
+use std::ops::{Add, Mul, Sub};
 
 #[derive(Debug, Copy, Clone)]
 pub struct FieldElement {
@@ -36,7 +36,8 @@ impl Sub for FieldElement {
         if other.prime != self.prime {
             return Err(format!("Cannot add two nums in different fields"));
         }
-        let num: isize = ((self.num as isize - other.num as isize) as isize).rem_euclid(self.prime as isize);
+        let num: isize =
+            ((self.num as isize - other.num as isize) as isize).rem_euclid(self.prime as isize);
         Self::new(num as usize, self.prime)
     }
 }
@@ -44,6 +45,18 @@ impl Sub for FieldElement {
 impl PartialEq for FieldElement {
     fn eq(&self, other: &Self) -> bool {
         (self.num == other.num) && (self.prime == other.prime)
+    }
+}
+
+impl Mul for FieldElement {
+    type Output = Result<Self, String>;
+
+    fn mul(self, other: Self) -> Self::Output {
+        if other.prime != self.prime {
+            return Err(format!("Cannot add two nums in different fields"));
+        }
+
+        Self::new((other.num * self.num).rem_euclid(self.prime), self.prime)
     }
 }
 
@@ -79,5 +92,13 @@ mod tests {
         let b = FieldElement::new(12, 13).unwrap();
         let c = FieldElement::new(8, 13).unwrap();
         assert_eq!((a - b).unwrap(), c);
+    }
+
+    #[test]
+    fn test_mul() {
+        let a = FieldElement::new(3, 13).unwrap();
+        let b = FieldElement::new(12, 13).unwrap();
+        let c = FieldElement::new(10, 13).unwrap();
+        assert_eq!((a * b).unwrap(), c);
     }
 }
