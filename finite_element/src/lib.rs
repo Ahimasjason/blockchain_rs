@@ -1,5 +1,5 @@
 use std::cmp::PartialEq;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Debug, Copy, Clone)]
 pub struct FieldElement {
@@ -16,10 +16,17 @@ impl FieldElement {
         Ok(Self { num, prime })
     }
 
-    pub fn pow(&self, power: u32) -> Result<Self, String> {
+    pub fn pow(&self, power: i64) -> Result<Self, String> {
+        // let mut n = power;
+        // while n < 0{
+        //     n += (self.prime - 1) as i32;
 
-        Self::new(self.num.pow(power as u32) % self.prime , self.prime)
-        
+        // }
+        let n = power.rem_euclid((self.prime - 1) as i64);
+        let num = (self.num as i64)
+            .pow(n as u32)
+            .rem_euclid(self.prime as i64);
+        Self::new(num as usize, self.prime)
     }
 }
 
@@ -65,6 +72,38 @@ impl Mul for FieldElement {
         Self::new((other.num * self.num).rem_euclid(self.prime), self.prime)
     }
 }
+
+impl Div for FieldElement {
+    type Output = Result<Self, String>;
+
+    fn div(self, other: Self) -> Self::Output {
+        if other.prime != self.prime {
+            return Err(format!("Cannot add two nums in different fields"));
+        }
+        let n = pow_mod(other.num, self.prime - 2, self.prime);
+        let num = (self.num * n) % self.prime;
+        Self::new(num, self.prime)
+    }
+}
+
+
+//  pow_mod from stack overflow for handling usize overflow caused by u32.pow
+fn pow_mod(mut a:usize, mut b:usize, modulo: usize) -> usize{
+    
+    let mut num = 1;
+    // let mut b= b;
+    while b > 0{
+        if b & 1 != 0 {
+           num = (num * a).rem_euclid(modulo); 
+        }
+        
+        b >>= 1;
+        a = (a*a).rem_euclid(modulo);
+    }
+    num
+    
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -114,7 +153,19 @@ mod tests {
         // let b = FieldElement::new(12, 13).unwrap();
         let c = FieldElement::new(1, 13).unwrap();
         assert_eq!(a.pow(3).unwrap(), c);
-    }
-    
+        let d = FieldElement::new(7, 13).unwrap();
+        let e = FieldElement::new(8, 13).unwrap();
+        assert_eq!(d.pow(-3).unwrap(), e);
 
+        // print(a**-3==b)
+    }
+
+    #[test]
+    fn test_div() {
+        let a = FieldElement::new(3, 31).unwrap();
+        let b = FieldElement::new(4, 31).unwrap();
+        let c = FieldElement::new(24, 31).unwrap();
+        // let h = a / c;
+        assert_eq!((a / c).unwrap(), b);
+    }
 }
